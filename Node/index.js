@@ -5,6 +5,7 @@
 //Dependencies
 var http = require('http');
 var url = require('url');
+var StringDecoder = require('string_decoder').StringDecoder;
 
 // server should respond to all requests
 var server = http.createServer(function(req,res){
@@ -24,13 +25,25 @@ var server = http.createServer(function(req,res){
   var method = req.method.toLowerCase();
 
 //Get the Header sent by user
-  var headers = req.Headers;
+  var headers = req.headers;
+
+//Get the payloads, if any
+var decoder = new StringDecoder('utf-8');
+var buffer = '';
+req.on('data',function(data){
+  buffer += decoder.write(data);
+});
+req.on('end',function(){
+  buffer += decoder.end();
+
+  //send the response
+    res.end('Hello world\n');
+  //creating log
+    console.log('Recived request with these payload: ',buffer);
+
+})
 
 
-//send the response
-  res.end('Hello world');
-//creating log
-  console.log('Recived request with these headers',headers);
 
 });
 
