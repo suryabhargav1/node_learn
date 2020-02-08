@@ -6,6 +6,7 @@
 var http = require('http');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
+var config = require('./config');
 
 // server should respond to all requests
 var server = http.createServer(function(req,res){
@@ -72,9 +73,9 @@ var buffer = '';
   })
 });
 
-//Start server and list to port 300
-server.listen(3000,function(){
-  console.log('I am listening in 3000');
+//Start server
+server.listen(config.port,function(){
+  console.log('I am listening in ' + config.port + " in "+ config.envName+" mode");
 });
 
 //Define the handlers
