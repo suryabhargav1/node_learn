@@ -103,11 +103,10 @@ var unfiedServer = function(req,res){
 //Define the handlers
 var handlers = {};
 
-//sample handlers
-handlers.sample = function(data,callback){
-  //call back a http status code and Payload(object)
-  callback(406,{'name' : 'sample handler'});
-};
+//Ping handler
+handlers.ping = function(data,callback){
+  callback(200);
+}
 
 //not found folder
 handlers.notFound = function(data,callback){
@@ -116,5 +115,5 @@ handlers.notFound = function(data,callback){
 
 //Defineing a req router
 var router = {
-  'sample' : handlers.sample
+  'ping' : handlers.ping
 }
