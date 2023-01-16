@@ -1,5 +1,7 @@
 /*
-* primary file for api
+* Primary file for the API
+*
+*
 */
 
 //Dependencies
@@ -7,47 +9,90 @@ var http = require('http');
 var url = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
 
-// server should respond to all requests
-var server = http.createServer(function(req,res){
+//The server should respomd to all requests with a string
+var server = http.createServer(function (req, res) {
 
-//pasing url
-  var parseUrl = url.parse(req.url,true);
+    //get the url and parse
+    var parsedUrl = url.parse(req.url, true);
 
-//get the path
-  var path = parseUrl.pathname;
-  var trimedPath = path.replace(/^\/+|\/+$/g,'');
+    //Get the path
+    var path = parsedUrl.pathname;
+    var trimedPath = path.replace(/^\/+|\/+$/g, '');
 
-//GEt the query string as an object
-  var queryStringObject = parseUrl.query;
+    //getting query string as an object
+    var queryStringObject = parsedUrl.query;
+
+    //get the HTTP method
+    var method = req.method.toLowerCase();
+
+    // get the headers as an object
+    var headers = req.headers;
+
+    //geting payload, if any
+    var decoder = new StringDecoder('utf-8');
+    var buffer = '';
+    req.on('data', function (data) {
+        buffer += decoder.write(data);
+    });
+    req.on('end', function () {
+        buffer += decoder.end();
+
+        // Choose the Handler this request to go to if one is not found got not found handler
+        var chosenHandler = typeof(router[trimedPath]) !== 'undefined' ? router[trimedPath]: handlers.notFound;
+
+        //construct the data object to send to handler
+        var data = {
+            "trimedPath" : trimedPath,
+            "queryStringObject": queryStringObject,
+            "method": method,
+            "headers" : headers,
+            "payload": buffer
+        }
+
+        //Route the request to the Handler specifed in the router
+        chosenHandler(data,function(statusCode,payload){
+            //Use tha status code handler, or default to 200
+            statusCode = typeof(statusCode) == "number"? statusCode : 200;
 
 
-//get the http meothod
-  var method = req.method.toLowerCase();
+            // Use the payload callback by the hander, or default to empty object
+            payload = typeof(payload) == 'object'? payload:{};
 
-//Get the Header sent by user
-  var headers = req.headers;
+            //Convert the pay load to a string
+            var payloadString = JSON.stringify(payload);
 
-//Get the payloads, if any
-var decoder = new StringDecoder('utf-8');
-var buffer = '';
-req.on('data',function(data){
-  buffer += decoder.write(data);
-});
-req.on('end',function(){
-  buffer += decoder.end();
+            //Return the response
+            res.writeHead(statusCode);
+            res.end(payloadString);
 
-  //send the response
-    res.end('Hello world\n');
-  //creating log
-    console.log('Recived request with these payload: ',buffer);
+            //Log the Request path
+            console.log("Returning the Response: ",statusCode,payloadString);
+
+        });
+    });
 
 })
 
+// Start the server, and have it listen on port 3000
+server.listen(3001, function () {
+    console.log('This server is listening on 3000');
+})
 
+//Define Handelers
+var handlers = {}
 
-});
+//Sample Handler
+handlers.sample = function(data,callback){
+    //Call back a Http status code and a payload object
+    callback(406,{'name':"sample handeler"})
+};
 
-//Start server and list to port 300
-server.listen(3000,function(){
-  console.log('I am listening in 3000');
-});
+//Not found Handler
+handlers.notFound = function(data,callback){
+    callback(404);
+};
+
+//Defining a Request router
+var router = {
+    'sample' : handlers.sample
+}
